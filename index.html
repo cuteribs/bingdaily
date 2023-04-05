@@ -1,0 +1,205 @@
+<html>
+
+<head>
+	<meta name="viewport" content="width=device-width">
+	<link rel="stylesheet" href="photobox.min.css" />
+	<style>
+		body {
+			margin: 0 50px;
+			background: #333;
+			color: #ccc;
+		}
+
+		.head {
+			display: flex;
+			flex-direction: row;
+			justify-content: space-between;
+			margin: 30px auto 0;
+		}
+
+		.head h2 {
+			margin: 0;
+			padding: 0;
+			line-height: 1em;
+			color: #ccc;
+		}
+
+		#yearMonths {
+			font-size: 1.5rem;
+			display: block;
+			width: 150px;
+		}
+
+		.repo {
+			width: 2em;
+		}
+
+		#container {
+			width: 100%;
+			margin: 20px 0 0 0;
+			list-style: none;
+			padding: 0;
+			display: flex;
+			flex-direction: row;
+			flex-wrap: wrap;
+		}
+
+		#container>li {
+			margin: 5px;
+			position: relative;
+			transition: .1s;
+		}
+
+		#container>li>a {
+			width: 200px;
+			height: 112px;
+			display: block;
+			overflow: hidden;
+			transition: .4s ease-out;
+			transform: rotateX(90deg) translate(-50px, -50%);
+		}
+
+		#container>li>a:active,
+		#container>li>a:focus {
+			outline: none;
+		}
+
+		#container>li>a>img {
+			width: 100%;
+			border: 0;
+			transition: .3s ease-out;
+		}
+
+		#container>li.loaded:hover {
+			z-index: 2;
+			transform: scale(1.5);
+		}
+
+		#container>li.loaded>a {
+			transform: rotateX(0deg) translate(0, 0);
+		}
+
+		#container>li.loaded>a:hover {
+			box-shadow: 0 0 0 2px #FFF, 0 0 20px 5px #000;
+			transition: .1s;
+		}
+
+		#container>li.loaded>a:hover img {
+			transform: scale(1.2);
+		}
+
+		.pbWrapper img.zoomable {
+			transition: all 0.5s ease-out;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="head">
+		<h2>Bing Daily Wallpaper</h2>
+		<select id="yearMonths"></select>
+		<select id="cdns">
+			<option></option>
+			<option value="jsdelivr">jsdelivr CDN</option>
+			<option value="rawgit">rawgit CDN</option>
+			<!-- https://cdn.jsdelivr.net/gh/cuteribs/bingdaily/thumbnails/OHR.SeaGoldie_EN-US9625167980_UHD.jpg -->
+			<!-- https://ghcdn.rawgit.org/cuteribs/bingdaily/main/thumbnails/OHR.SeaGoldie_EN-US9625167980_UHD.jpg -->
+		</select>
+		<a href="https://github.com/cuteribs/bingdaily">
+			<svg class="repo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+				<title>GitHub</title>
+				<path fill="#7F8C8D"
+					d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
+			</svg>
+		</a>
+	</div>
+	<ul id="container"></ul>
+	<script src="moment.min.js"></script>
+	<script src="jquery.min.js"></script>
+	<script src="jquery.photobox.min.js"></script>
+	<script>
+	</script>
+	<script>
+		const yearMonths = [];
+		const $yearMonths = $('#yearMonths').on('change', e => render());
+		const $cdns = $('#cdns').on('change', e => render());
+		const $container = $('#container').photobox('a', {
+			thumb: true,
+			loop: false,
+			captionTmpl: '<div class="title">{title}</div><a class="uhd-link" href="#">UHD</a><div class="counter">({currentImageIdx}/{totalImagesCount})</div>'
+		});
+
+		$(document.body).on('click', '.uhd-link', e => {
+			const fhdUrl = $('img.zoomable').attr('src');
+			window.open(fhdUrl.replace('_1920x1080.jpg', '_UHD.jpg'), '_blank');
+		});
+
+		let date = moment();
+
+		while (date.isAfter('2019-03-31')) {
+			const text = date.format('YYYY-MM');
+			$yearMonths.append(new Option(text, text));
+			date = date.subtract(1, 'months');
+		}
+
+		async function query(yearMonth) {
+			const cdn = $cdns.val();
+			let thumbnailBaseUrl = 'https://cuteribs.ga/bingdaily';
+
+			switch (cdn) {
+				case 'jsdelivr':
+					thumbnailBaseUrl = 'https://fastly.jsdelivr.net/gh/cuteribs/bingdaily';
+					break;
+				case 'rawgit':
+					thumbnailBaseUrl = 'https://ghcdn.rawgit.org/cuteribs/bingdaily/main';
+					break;
+			}
+
+			const config = {
+				headers: {
+					'Content-Type': 'application/json',
+					'Accept': 'application/json',
+				}
+			};
+
+			const tasks = Promise.all(
+				['', '2'].map(n => fetch(`https://cuteribs.ga/bingdaily/index${n}.json`).then(resp => resp.json()))
+			);
+			const json = (await tasks).flat();
+			json.sort((a, b) => a.date > b.date ? 1 : (a.date < b.date ? -1 : 0));
+			const list = json.filter(i => i.date.slice(0, 7) == yearMonth).map(o => ({
+				ThumbUrl: `${thumbnailBaseUrl}/thumbnails/${o.fileName}`,
+				FHDUrl: `https://www.bing.com/th?id=${o.fileName.replace('_UHD.jpg', '_1920x1080.jpg')}`,
+				UHDUrl: `https://www.bing.com/th?id=${o.fileName}`,
+				Title: o.title,
+				Date: o.date,
+				Desc: o.desc,
+				Copyright: o.copyright
+			}));
+			return list.reverse();
+		}
+
+		async function render() {
+			const yearMonth = $yearMonths.val();
+			const images = await query(yearMonth);
+			$container.html('');
+
+			images.forEach((item, index) => {
+				const $link = $('<a>').attr('href', item.FHDUrl);
+				const $img = $('<img>').on('load', e => { })
+					.attr('largeUrl', item.FHDUrl)
+					.attr('src', item.ThumbUrl)
+					.attr('title', `${item.Title} (${item.Date})`)
+					.appendTo($link);
+				const $li = $('<li>').append($link);
+				$container.append($li);
+
+				setTimeout(() => $li.addClass('loaded'), 25 * index);
+			});
+		}
+
+		render($yearMonths.val());
+	</script>
+</body>
+
+</html>
