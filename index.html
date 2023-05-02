@@ -144,7 +144,7 @@
 
 		async function query(yearMonth) {
 			const cdn = $cdns.val();
-			let thumbnailBaseUrl = 'https://hub.gitmirror.com/https://raw.githubusercontent.com/cuteribs/bingdailyassets/main';
+			let thumbnailBaseUrl = 'https://raw.githubusercontent.com/cuteribs/bingdailyassets/main';
 
 			switch (cdn) {
 				case 'jsdelivr':
@@ -163,7 +163,7 @@
 			};
 
 			const tasks = Promise.all(
-				['', '2'].map(n => fetch(`https://hub.gitmirror.com/https://raw.githubusercontent.com/cuteribs/bingdailyassets/main/index${n}.json`).then(resp => resp.json()))
+				['', '2'].map(n => fetch(`./index${n}.json`).then(resp => resp.json()))
 			);
 			const json = (await tasks).flat();
 			json.sort((a, b) => a.date > b.date ? 1 : (a.date < b.date ? -1 : 0));
