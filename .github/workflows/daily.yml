@@ -1,0 +1,29 @@
+name: BingDaily
+
+on:
+  schedule:
+    - cron: '0 */2 * * *'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:    
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 18.x
+
+      - name: Run bingdaily.js
+        env:
+          TOKEN: ${{ secrets.TOKEN }}
+          REPO_NAME: cuteribs/bingdailyassets
+          IMAGE_ON: 1
+          TMB_ON: 1
+          WEIXIN: ${{ secrets.WEIXIN }}
+          BARK: ${{ secrets.BARK }}
+        run: |
+          npm i
+          node bingdaily.js
